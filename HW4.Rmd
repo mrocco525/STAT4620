@@ -1,0 +1,183 @@
+---
+title: "Homework_4"
+author: "Mason Rocco"
+date: "2023-10-20"
+output: pdf_document
+---
+
+# Problem 1 (Chapter 6, Problem 9)
+### a)
+```{r, warning=F, message=F}
+library(ISLR2)
+library(pls)
+library(glmnet)
+set.seed(525)
+
+train_index <- sample(1:nrow(College), (nrow(College)/2))
+train <- College[train_index,]
+test <- College[-train_index,]
+```
+\
+
+### b)
+
+```{r}
+linear.fit <- lm(Apps ~., data = train)
+linear.pred <- predict(linear.fit, test)
+linear.mse <- mean((linear.pred - test$Apps)^2)
+linear.mse
+```
+\
+
+### c)
+
+```{r}
+set.seed(525)
+x <- model.matrix(Apps~., data = College)[,-1]
+y <- College$Apps
+index <- sample(1:nrow(x),nrow(x)/2)
+x.train <- x[index,]
+x.test <- x[-index,]
+y.train <- y[index]
+y.test <- y[-index]
+ridge.cv <- cv.glmnet(x.train, y.train, alpha =0)
+ridge.lambda.cv <- ridge.cv$lambda.min
+fit.ridge <- glmnet(x.train, y.train, alpha = 0, lambda = ridge.lambda.cv)
+pred.ridge <- predict(fit.ridge, newx = x.test)
+ridge.mse <- mean((pred.ridge-y.test)^2)
+ridge.mse
+```
+\
+
+### d)
+
+```{r}
+set.seed(525)
+lasso.cv <- cv.glmnet(x.train, y.train, alpha =1)
+lasso.lambda.cv <- lasso.cv$lambda.min
+fit.lasso <- glmnet(x.train, y.train, alpha = 1, lambda = lasso.lambda.cv)
+pred.lasso <- predict(fit.lasso, newx = x.test)
+lasso.mse <- mean((pred.lasso-y.test)^2)
+lasso.mse
+```
+\
+
+### e)
+
+```{r}
+set.seed(525)
+pcr.fit <- pcr(Apps ~., data = train,scale = T, validation="CV")
+validationplot(pcr.fit)
+pcr.pred <- predict(pcr.fit, test, ncomp = 17)
+pcr.mse <- mean((pcr.pred - test$Apps)^2)
+pcr.mse
+```
+\
+
+### f)
+
+```{r}
+set.seed(525)
+pls.fit <- plsr(Apps ~., data = train,scale = T, validation="CV")
+validationplot(pls.fit)
+pls.pred <- predict(pls.fit, test, ncomp = 14)
+pls.mse <- mean((pls.pred - test$Apps)^2)
+pls.mse
+```
+\
+
+### g)
+
+```{r}
+v <- var(test$Apps)
+data.frame(approach = c("OLS", "Ridge", "Lasso", "PCR", "PLS"),
+           MSE = c(linear.mse, ridge.mse, lasso.mse, pcr.mse, pls.mse),
+           R2 = c(1- linear.mse/v, 1- ridge.mse/v, 1- lasso.mse/v, 1- pcr.mse/v, 1- pls.mse/v))
+```
+
+As we can see above, all of the 5 approaches have a very similar values for both
+the MSE and the $R^2$, with the exception of the Ridge approach. All of the models
+performed well nonetheless, with the $R^2$ values above 0.9, again with the exception
+of Ridge, which was still a good value of .88.
+
+
+## Problem 2 (Chapter 6, Problem 11)
+### a)
+
+```{r}
+set.seed(525)
+train_index2 <- sample(1:nrow(Boston), (nrow(Boston)/2))
+train2 <- Boston[train_index,]
+test2 <- Boston[-train_index,]
+
+linear.fit2 <- lm(crim ~., data = train2)
+linear.pred2 <- predict(linear.fit2, test2)
+linear.mse2 <- mean((linear.pred2 - test2$crim)^2)
+linear.mse2
+
+
+x2 <- model.matrix(crim~., data = Boston)[,-1]
+y2 <- Boston$crim
+index2 <- sample(1:nrow(x2),nrow(x2)/2)
+x.train2 <- x2[index2,]
+x.test2 <- x2[-index2,]
+y.train2 <- y2[index2]
+y.test2 <- y2[-index2]
+ridge.cv2 <- cv.glmnet(x.train2, y.train2, alpha =0)
+ridge.lambda.cv2 <- ridge.cv2$lambda.min
+fit.ridge2 <- glmnet(x.train2, y.train2, alpha = 0, lambda = ridge.lambda.cv2)
+pred.ridge2 <- predict(fit.ridge2, newx = x.test2)
+ridge.mse2 <- mean((pred.ridge2-y.test2)^2)
+ridge.mse2
+
+lasso.cv2 <- cv.glmnet(x.train2, y.train2, alpha =1)
+lasso.lambda.cv2 <- lasso.cv2$lambda.min
+fit.lasso2 <- glmnet(x.train2, y.train2, alpha = 1, lambda = lasso.lambda.cv2)
+pred.lasso2 <- predict(fit.lasso2, newx = x.test2)
+lasso.mse2 <- mean((pred.lasso2-y.test2)^2)
+lasso.mse2
+
+
+pcr.fit2 <- pcr(crim ~., data = train2, scale = T, validation="CV")
+validationplot(pcr.fit2)
+pcr.pred2 <- predict(pcr.fit2, test2, ncomp = 12)
+pcr.mse2 <- mean((pcr.pred2 - test2$crim)^2)
+pcr.mse2
+
+
+pls.fit2 <- plsr(crim ~., data = train2, scale = T, validation="CV")
+validationplot(pls.fit2)
+pls.pred2 <- predict(pls.fit2, test2, ncomp = 10)
+pls.mse2 <- mean((pls.pred2 - test2$crim)^2)
+pls.mse2
+
+
+v2 <- var(test2$crim)
+data.frame(approach = c("OLS", "Ridge", "Lasso", "PCR", "PLS"),
+           MSE = c(linear.mse2, ridge.mse2, lasso.mse2, pcr.mse2, pls.mse2),
+           R2 = c(1- linear.mse2/v2, 1- ridge.mse2/v2, 1- lasso.mse2/v2, 1- pcr.mse2/v2, 1- pls.mse2/v2))
+```
+As can be seen above, the Ridge Regression model performed the best, although
+they all had very similar performance. However, the Ridge Regression model had 
+the lowest MSE and the largest $R^2$.
+
+### b)
+
+I would argue that all of these models can perform well on the data set. The reason
+for this is that they all have very similar values for both the MSE and $R^2$.
+Because of this, I do not think one model would be better suited than any of 
+the others. However, for the sake of this seed, Ridge Regression has the best
+performance.
+
+### c)
+
+```{r}
+coef(fit.ridge2)
+```
+
+My model did include all of the features in the data set. Since Ridge Regression
+does not make any coefficients equal to zero, all of the features are used. 
+However, we can see that some of the variables do have very small coefficients. 
+For example, the variables zn, indus, age, and tax are all less than .1 away 
+from zero, which shows they have very little influence on the model.
+

@@ -1,0 +1,218 @@
+---
+title: "Homework_2"
+author: "Mason Rocco"
+date: "2023-09-22"
+output: pdf_document
+---
+
+## Problem 1 (Ch. 3, Problem 3)
+
+##### a)
+The correct answer is iii. When the value for GPA is less than 3.5, a college graduate
+will have a better salary than a high school graduate. The reason for this can be explained
+by plugging in values and using algebra to simplify the equation. The final equation
+is as follows:
+
+Salary (College) > Salary (High School) when GPA < 3.5
+
+##### b)
+We can use the following equation to predict salary:
+\
+Salary = 50 + 20(GPA) + .07(IQ) + 35(Level) + .01(GPA * IQ) - 10(GPA * Level)
+
+When we plug in the values, the estimated salary for a college graduate with IQ of
+110 and GPA 4.0 is $137,100.
+
+##### c)
+This statement is false. The reason being is that the coefficient does not show 
+that there is not an interaction effect. The coefficient term could change based
+on what the value of GPA and IQ are, so the coefficient is not a good test for
+whether there is an interaction between the two variables.
+
+## Problem 2 (Ch. 3, Problem 4)
+
+##### a)
+We would expect the training RSS to be lower for the cubic regression, since it
+would likely be able to account for more flexibility in a model. Although the
+true relationship is linear, the cubic regression would likely have a lower RSS,
+especially since the number of observations is only 100.
+
+##### b)
+In this scenario, I think that the test RSS for linear regression would probably be
+a little bit lower than that of the cubic regression. The reason for this is that
+the cubic regression would probably not be too far off from a straight line, but the
+linear regression would most likely have a lower RSS.
+
+##### c)
+Since the true relationship is not linear, I think that the training RSS would
+be lower for the cubic regression. The reason for this is that the cubic model
+would be able to account for more of the flexibility of the true relationship.
+
+##### d)
+Here, I would argue that the cubic regression still has a lower RSS than the 
+linear regression would, depending on how far from linear the true relationship is.
+I think that it is possible that the linear regression could have a lower RSS if
+the true relationship is relatively close to being linear.
+
+## Problem 3 (Ch. 4, Problem 4)
+
+##### a)
+Given that the majority of cases will include the entire 10% interval, I would
+say that the average would be near 10% of the available observations are used.
+The only scenarios in which the observations aren't all used would be when 
+X < .1 or X > .9.
+
+##### b)
+Here, the problem is similar but the dimensions are doubled. Because of this, 
+I think that the percent of observations that is used will decrease. Since there
+is an approximate 10% used for each dimension (using the logic above), we can 
+multiply 0.1 * 0.1 to get the answer that around 1% of observations will be used.
+
+##### c)
+Using the same steps as above, we can calculate the final percent of observations
+used by putting .1 to the power of p, the number of dimensions. Here,
+$.1^{100}$, which is very small and almost 0.
+
+##### d)
+Looking particularly at part c), we can see that with a very large number of 
+dimensions, the percentage of observations used is almost 0. This proves that
+using KNN when p is large is not ideal.
+
+## Problem 4 (Ch. 4, Problem 6)
+##### a)
+
+p(X) = 
+$\frac{e^{\hat\beta_0+\hat\beta_1X_1+\hat\beta_2X_2}}{1+e^{\hat\beta_0+\hat\beta_1X_1+\hat\beta_2X_2}}$
+
+$p(X) = \frac{e^{-.5}}{1+e^{-.5}} = 0.378$
+
+```{r}
+exp(-.5) / (1 + exp(-.5))
+```
+
+##### b)
+We will set p(X) = .5, and solve for $X_1$.
+
+$0.5 = \frac{e^{-6+.05X_1+1*3.5}}{1+e^{-6+.05X_1+1*3.5}}$
+$X_1 = \frac{log(1)+2.5}{.05}$
+$X_1 = 50$
+
+So, the student would need to put in 50 hours of studying to have a 50% chance of
+getting an A in the class.
+
+## Problem 5 (Ch. 4, Problem 13)
+
+##### a)
+```{r, include=FALSE}
+library(ISLR2)
+Weekly
+```
+
+```{r}
+pairs(Weekly[,-9])
+cor(Weekly[,-9])
+```
+
+As can be seen from the above pairs plot and correlation matrix, we see there are
+not any strong relationships between the Lag variables, but there is certainly
+a relationship between the Volume and Year variables.
+
+##### b)
+```{r}
+model_direction <- glm(Direction ~ Lag1 + Lag2 + Lag3 + Lag4 + Lag5 + Volume, 
+                       data = Weekly, family = binomial)
+summary(model_direction)
+```
+
+I would argue that most of the predictors are not statistically significant, although
+Lag2 does have significance at the .05 level, as the p-value for that predictor is
+0.0296.
+
+##### c)
+```{r}
+library(caret)
+predict <- factor(ifelse(predict(model_direction, type = "response") < .5, "Down", "Up"))
+confusionMatrix(predict, Weekly$Direction, "Up")
+```
+
+
+As can be seen by the above confusion matrix, the accuracy of the model is roughly
+56%, which is not very great. Additionally, we see that the specificity is very low,
+only around 11%, which shows that the linear model does not do a very good job of
+predicting the negative class.
+
+##### d)
+```{r}
+train <- Weekly[Weekly$Year <= 2008,]
+test <- Weekly[Weekly$Year > 2008,]
+
+new_model_direction <- glm(Direction ~ Lag2, data = train, family = "binomial")
+new_predict <- factor(ifelse(predict(new_model_direction, test, type = "response") < .5,
+                             "Down", "Up"))
+confusionMatrix(new_predict, test$Direction, "Up")
+```
+
+Here, the overall accuracy improves from 56% to 62.5%, which is slightly better,
+but not by much. We also see a slight improvement in the specificity, but the new
+value is only 20%, which is still not very good.
+
+##### e)
+```{r}
+library(MASS)
+lda <- lda(Direction ~ Lag2, data = train)
+predict_lda <- predict(lda, test)
+
+confusionMatrix(predict_lda$class, test$Direction, "Up")
+```
+
+As we can see, this LDA model is actual the same the previous linear regression 
+model done with the test and train datasets. They both have an accuracy of 62.5%,
+and the predictions themselves are the same.
+
+##### f)
+```{r}
+qda <- qda(Direction ~ Lag2, data = train)
+predict_qda <- predict(qda, test)
+
+confusionMatrix(predict_qda$class, test$Direction, "Up")
+```
+
+This QDA model has an accuracy value of 58.6%, which is slightly lower than the
+two previous models. One of the main reasons why the accuracy is so low is because
+the QDA model did not predict a down week at all, which made the specificity for 
+this model 0.
+
+##### g)
+```{r}
+library(class)
+set.seed(525)
+predict_knn <- knn(data.frame(Lag2 = train$Lag2), data.frame(Lag2 = test$Lag2),
+                   train$Direction)
+
+confusionMatrix(predict_knn, test$Direction, "Up")
+```
+
+For the KNN model, the accuracy is 50%, which is not as good as the other models.
+Although this model more evenly predicts between down and up, the accuracy is not
+very great when doing so.
+
+##### h)
+```{r}
+naivebayes <- naivebayes::naive_bayes(Direction ~ Lag2, data = train)
+predict_naivebayes <- predict(naivebayes, test)
+
+confusionMatrix(predict_naivebayes, test$Direction, "Up")
+```
+
+As can be seen above, the naive Bayes model has an accuracy of around 58%. This 
+model is actually the exact same as the QDA model, as the accuracy and predictions
+both have the same values.
+
+
+##### i)
+I would argue that the best model was either the initial train/test model (part d)
+or the LDA model (part e). The reason for this is that both of these models were
+the exact same. However, the accuracy which is 62.5%, was better than the accuracy
+for all of the other models.
+
+

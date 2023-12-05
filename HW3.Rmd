@@ -1,0 +1,229 @@
+---
+title: "Homework_3"
+author: "Mason Rocco"
+date: "2023-10-06"
+output: pdf_document
+---
+
+## Problem 1 (Chapter 5, Problem 8)
+
+#### a)
+```{r}
+set.seed (1)
+x <- rnorm (100)
+y <- x - 2 * x ^2 + rnorm (100)
+```
+
+In this data set, n is 100, since there are 100 observations, and p is 2, since
+there are 2 predictors.
+
+The model can be written as such:
+
+$Y = X - 2X^2 + \epsilon, \epsilon \sim N(0,1)$
+
+#### b)
+```{r}
+library(ggplot2)
+ggplot(mapping = aes(x=x, y=y)) +
+  geom_point() +
+  geom_smooth(method = "lm", formula = "y~x + I(x^2)")
+```
+
+As we can see from the above plot, the fitted model seems to fit the data relatively
+well, which makes sense, as the distribution seems to be roughly quadratic.
+
+#### c)
+```{r}
+set.seed(525)
+data <- data.frame(x, y)
+LOOCV <- function(data, formula) {
+  model <- glm(formula(formula), data = data)
+  mean(((data$y - predict(model))/(1-boot::glm.diag(model)$h))^2)
+}
+```
+ 
+
+##### i
+```{r}
+LOOCV(data, "y~x")
+```
+##### ii
+```{r}
+LOOCV(data, "y~x + I(x^2)")
+```
+##### iii
+```{r}
+LOOCV(data, "y~x + I(x^2) + I(x^3)")
+```
+##### iv
+```{r}
+LOOCV(data, "y~x + I(x^2) + I(x^3) + I(x^4)")
+```
+
+#### d)
+```{r}
+set.seed(2002)
+```
+
+
+##### i
+```{r}
+LOOCV(data, "y~x")
+```
+##### ii
+```{r}
+LOOCV(data, "y~x + I(x^2)")
+```
+##### iii
+```{r}
+LOOCV(data, "y~x + I(x^2) + I(x^3)")
+```
+##### iv
+```{r}
+LOOCV(data, "y~x + I(x^2) + I(x^3) + I(x^4)")
+```
+
+The answers are the same, regardless of the seed. The reason for this is that
+the LOOCV method does not include any randomness, and there is only one error
+statistic using this method. Because of this, the answers remain the same.
+
+#### e)
+The quadratic model had the lowest LOOCV error, which is to be expected. This
+makes sense because we can see that the distribution seems to be roughly 
+quadratic, as was mentioned in part b).
+
+#### f)
+
+
+##### i
+```{r}
+summary(glm(y~x, data=data))$coefficients
+```
+##### ii
+```{r}
+summary(glm(y~x + I(x^2), data=data))$coefficients
+```
+##### iii
+```{r}
+summary(glm(y~x + I(x^2) + I(x^3), data=data))$coefficients
+```
+##### iv
+```{r}
+summary(glm(y~x + I(x^2) + I(x^3) + I(x^4), data=data))$coefficients
+```
+
+As we can see, there is not any evidence that the coefficients for $X^3$ and $X^4$
+are not 0, at the 95% confidence level. This coincides with the LOOCV error that 
+we saw in part c).
+
+## Problem 2 (Chapter 5, Problem 9)
+#### a)
+```{r}
+library(ISLR2)
+mean(Boston$medv)
+```
+
+#### b)
+```{r}
+sd(Boston$medv) / sqrt(length(Boston$medv))
+```
+
+#### c)
+```{r}
+library(boot)
+set.seed(525)
+boot_mean <- function(vector, index) {
+  mean(vector[index])
+}
+boot_results <- boot(data = Boston$medv, statistic = boot_mean, R = 1000)
+boot_results
+```
+
+We can see that the estimate using bootstrap is very similar, as it is .41 
+compared to .409 from part b).
+
+#### d)
+```{r}
+boot_se <- sd(boot_results$t)
+c(mean(Boston$medv) - 2*boot_se, mean(Boston$medv) + 2*boot_se)
+```
+
+```{r}
+t.test(Boston$medv)
+```
+
+We can see that the confidence intervals are very similar.
+
+#### e)
+```{r}
+median(Boston$medv)
+```
+
+#### f)
+```{r}
+set.seed(525)
+boot_median <- function(vector, index) {
+  median(vector[index])
+}
+boot_results2 <- boot(data = Boston$medv, statistic = boot_median, R = 1000)
+boot_results2
+```
+We see that the standard error of the median is .39, which is quite small,
+when you consider the estimated median value of 21.2.
+
+#### g)
+```{r}
+quantile(Boston$medv, .1)
+```
+
+#### h)
+```{r}
+set.seed(525)
+boot_quantile <- function(vector, index) {
+  quantile(vector[index], .1)
+}
+boot_results3 <- boot(data = Boston$medv, statistic = boot_quantile, R = 1000)
+boot_results3
+
+```
+
+Again, we see that the standard error is relatively small when compared to the
+estimated value.
+
+## Problem 3 (Chapter 6, Problem 2)
+#### a)
+Answer iii is correct, because lasso will minimize 
+$RSS + \lambda \sum_{i=1}^{p}|\beta_i|$, while the least squared method will
+simply minimize RSS. Because of this, the estimate will shrink towards 0, which
+will reduce the variance of the prediction while slightly increasing the bias.
+
+#### b)
+Similar to lasso, answer iii is correct. This is because ridge regression will 
+minimize $RSS + \lambda \sum_{i=1}^{p}\beta_i^2$, while the least squared method 
+will simply minimize RSS. Because of this, the estimate will shrink towards 0,
+which will reduce the variance of the prediction while slightly increasing the bias.
+
+## Problem 4 (Chapter 6, Problem 4)
+#### a)
+Answer iii is correct, because when $\lambda = 0$, the value for $\hat\beta$ will
+be minimized from the training RSS. As $\lambda$ increases, we will see the
+training RSS also increase.
+
+#### b)
+Answer ii is correct, because as $\lambda$ increases, the test RSS will initially
+decrease, as there is a reduction in variance. However, eventually the increasing
+size of the shrinkage will overtake the reduction in variance, meaning the test
+RSS will increase again.
+
+#### c)
+Answer iv is correct, because as $\lambda$ increases, the flexibility will decrease,
+which results in a reduction in variance. This will continue until the variance
+is arbitrarily close to zero.
+
+#### d)
+Answer iii is correct. Similar to part c), we will see a decrease in flexibility
+as the value for $\lambda$ increases. This means that the bias will increase.
+
+#### e)
+Answer v is correct. Since the irreducible error is model dependent, the value
+would not change as a result of the $\lambda$ value increasing.

@@ -1,0 +1,247 @@
+---
+title: "Stat 4620 Homework 1"
+author: "Mason Rocco"
+date: "2023-09-08"
+output:
+  pdf_document: default
+  html_document: default
+  word_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Problem 1 (Ch. 2, Problem 1)
+##### a)
+With a large sample size and a small number of predictors, we would expect a
+flexible model to perform *better* than an inflexible model. Since there are a
+large number of observations, a flexible model is less likely to be at risk of 
+overfitting.
+
+##### b)
+With a large number of predictors and a small sample size, we would expect a
+flexible model to perform *worse* than an inflexible model. Since there are a lot
+of predictors and a small number of observations, overfitting is likely.
+
+##### c)
+If the relationship between the predictors and the the response is highly 
+non-linear, we would expect a flexible model to perform *better* than an 
+inflexible model. This is because a flexible model can show non-linear relationships
+better than an inflexible model.
+
+##### d)
+If the variance of the error terms is extremely high, we would expect a flexible
+model to perform *worse* than an inflexible model. This is because a flexible model
+is more likely to overfit when there is a large irreducible error value.
+
+## Problem 2 (Ch. 2, Problem 2)
+##### a)
+This scenario is a regression problem. We would be most interested in inference. 
+N is 500 and p is 3.
+
+##### b)
+This is a classification problem. We would be more interested in prediction. N 
+is 20 and p is 13.
+
+##### c)
+This is a regression problem. We would be interested in prediction. N is 52 and 
+p is 3.
+
+## Problem 3 (Ch. 2, Problem 10)
+##### a)
+```{r, include=FALSE}
+library(ISLR2)
+Boston
+```
+There are 506 rows and 13 columns in this dataset. The rows each represent a suburb
+of Boston, while the columns represent the variables in the dataset.
+
+##### b)
+```{r}
+pairs(Boston)
+```
+
+Looking at the pairwise scatterplots, the most notable findings are that there 
+seems to be negative linear relationships between 'dis' and 'nox' as well as 
+between 'lstat' and 'medv'.
+
+##### c)
+We can see that none of the variables have an extremely strong relationship with
+per capita crime rate. However, some variables do have a relationship. It seems 
+that 'lstat' and 'medv' both have a negative relationship with 'crim' that is 
+non-linear.
+
+##### d)
+```{r, warning=FALSE, message=FALSE}
+library(tidyverse)
+ggplot(Boston, aes(x = "", y = crim)) +
+  geom_boxplot() +
+  coord_flip() +
+  labs(y = "Crime", title = "Boxplot of Crime in Suburbs of Boston")
+
+range(Boston$crim)
+```
+
+Looking at the above boxplot, we see that most of the suburbs do not have any
+crime, but there are a few that have a very high crime rate. The large range is 
+very surprising, as we can see that the smallest crime rate is very small but the
+largest is extremely high.
+
+```{r}
+ggplot(Boston, aes(x = tax)) +
+  geom_histogram(binwidth = 10) + 
+  labs(title = "Tax Rates in Suburbs of Boston")
+
+range(Boston$tax)
+```
+
+The range of the tax rates for the suburbs is nowhere near as large as that of the
+crime rates, but it still is quite sizeable.
+
+```{r}
+ggplot(Boston, aes(x = ptratio)) +
+  geom_histogram() + 
+  labs(title = "Pupil-Teacher Ratios in Suburbs of Boston")
+
+range(Boston$ptratio)
+```
+
+We see the range of pupil-teacher ratio is much smaller, and there aren't too many
+outliers when looking at the histogram.
+
+##### e)
+```{r}
+table(Boston$chas)
+```
+
+35 suburbs are bound by the Charles River.
+
+##### f)
+```{r}
+median(Boston$ptratio)
+```
+
+The median for the pupil-teacher ratio is 19.05 among the suburbs in this dataset.
+
+##### g)
+```{r}
+Boston[Boston$medv == min(Boston$medv),]
+percentiles <- sapply(Boston[,-4], function(x) rank(x)/length(x)) %>%
+  as.data.frame()
+percentiles[c(399, 406),]
+```
+
+Here we can see the two suburbs that have the lowest value for 'medv' and the 
+percentiles compared to other suburbs in each of the other variables. Notable 
+percentiles are age in the 96th percentile, crime in the 98-99th percentile, and
+'lstat' above 90th percentile.
+
+##### h)
+
+\
+
+```{r}
+sum(Boston$rm > 7)
+sum(Boston$rm > 8)
+Boston_8rooms <- Boston[Boston$rm > 8,]
+
+```
+There are 64 suburbs that average more than 7 rooms per dwelling and 13 that
+average more than 8 rooms per dwelling. For the suburbs that average more than
+8 rooms per dwelling, we see that they tend to have large 'medv' values and low
+'lstat' values, indicating that these suburbs likely have more money.
+
+## Problem 4 (Ch. 3, Problem 15)
+##### a)
+
+```{r}
+crime_lm_zn <- lm(crim ~ zn, data = Boston)
+crime_lm_indus <- lm(crim ~ indus, data = Boston)
+crime_lm_chas <- lm(crim ~ chas, data = Boston)
+crime_lm_nox <- lm(crim ~ nox, data = Boston)
+crime_lm_rm <- lm(crim ~ rm, data = Boston)
+crime_lm_age <- lm(crim ~ age, data = Boston)
+crime_lm_dis <- lm(crim ~ dis, data = Boston)
+crime_lm_rad <- lm(crim ~ rad, data = Boston)
+crime_lm_tax <- lm(crim ~ tax, data = Boston)
+crime_lm_ptratio <- lm(crim ~ ptratio, data = Boston)
+crime_lm_lstat <- lm(crim ~ lstat, data = Boston)
+crime_lm_medv <- lm(crim ~ medv, data = Boston)
+
+summary(crime_lm_zn)
+summary(crime_lm_indus)
+summary(crime_lm_chas)
+summary(crime_lm_nox)
+summary(crime_lm_rm)
+summary(crime_lm_age)
+summary(crime_lm_dis)
+summary(crime_lm_rad)
+summary(crime_lm_tax)
+summary(crime_lm_ptratio)
+summary(crime_lm_lstat)
+summary(crime_lm_medv)
+```
+
+
+For all of the above models (except for chas), we see that there is a statistically
+significant association between the predictor and the response. This is because 
+the p-value for these models is < .05.
+
+```{r}
+res_medv <- rstandard(crime_lm_medv)
+plot(Boston$medv, res_medv)
+
+res_rad <- rstandard(crime_lm_rad)
+plot(Boston$rad, res_rad)
+
+res_lstat <- rstandard(crime_lm_lstat)
+plot(Boston$lstat, res_lstat)
+```
+
+Above we can see the residuals plots from the models for 'medv', 'rad', and 'lstat'.
+These all support the claim that there is a significant association between the
+predictors and the response, 'crim'.
+
+
+##### b)
+```{r}
+crime_lm <- lm(crim~., data = Boston)
+summary(crime_lm)
+```
+
+Looking at the model, we can reject the null hypothesis for 'zn', 'dis', 'rad',
+and 'medv'. The results for the model are not spectacular overall, with an adjusted
+R-squared value of only .436.
+
+##### c)
+```{r}
+Estimate <- c()
+y <- Boston$crim
+
+for (i in 1:ncol(Boston)) {
+  x <- Boston[ ,i]
+  
+  if (!identical(y, x)) {
+    Estimate[i] <- summary(lm(y ~ x))$coefficients[2, 1]
+  } else {
+    Estimate[i] <- NA
+  }
+}
+
+crime_preds <- data.frame(varname = names(Boston), Estimate)
+```
+
+
+
+```{r}
+plot(x = crime_preds$Estimate[-1], y = summary(crime_lm)$coefficients[-1,1], 
+     xlab = "Univariate Coefficient", ylab = "Multivariate Coefficient", 
+     main = "Univariate vs Multivariate Coefficients")
+```
+
+We can see from the above plot that the results are generally pretty similar between
+the univariate and the multivariate cases. However, it should be noted that this is not
+always the case. There are some variables that have coefficients that are not similar at
+all.
+

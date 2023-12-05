@@ -1,0 +1,149 @@
+---
+title: "Homework_5"
+author: "Mason Rocco"
+date: "2023-11-1"
+output:
+  pdf_document: default
+  html_document:
+    df_print: paged
+---
+
+# Problem 1 (Chapter 7, Problem 1)
+### a)
+$f(x) = \beta_0 + \beta_1x + \beta_2x^2 + \beta_3x^3 + \beta_4(x-\xi)^3$
+
+$f(x) = \beta_0 + \beta_1x + \beta_2x^2 + \beta_3x^3$
+
+$f(x) = a_1 + b_1x + c_1x^2 + d_1x^3$
+
+$a_1 = \beta_0$
+
+$b_1 = \beta_1$
+
+$c_1 = \beta_2$
+
+$d_1 = \beta_3$
+
+### b)
+$f(x) = \beta_0 + \beta_1x + \beta_2x^2 + \beta_3x^3 + \beta_4(x-\xi)^3$
+
+$f(x) = \beta_0 + \beta_1x + \beta_2x^2 + \beta_3x^3 + \beta_4(x-\xi)\beta_4(x-\xi)\beta_4(x-\xi)$
+
+$f(x)=(\beta_0-\beta_4\xi^3)+(\beta_1x+\beta_43x\xi^2)+(\beta_2x^2-\beta_43x^2\xi)+(\beta_3x^3+\beta_4x^3)$
+
+$f(x) = a_2 + b_2x + c_2x^2 + d_2x^3$
+
+$a_1 = \beta_0$
+
+$b_1 = \beta_1$
+
+$c_1 = \beta_2$
+
+$d_1 = \beta_3$
+
+### c)
+$f_1(\xi) = f_2(\xi)$
+
+$f_1(\xi) = \beta_0 + \beta_1\xi + \beta_2\xi^2 + \beta_3\xi^3$
+
+$f_2(\xi) = (\beta_0 - \beta_4\xi^3)+(\beta_1+\beta_43\xi^2)\xi+(\beta_2-\beta_43\xi)\xi^2+(\beta_3+\beta_4)\xi^3$
+
+$f_2(\xi) = \beta_0-\beta_4\xi^3+\beta_1+\beta_43\xi^3+\beta_2\xi^2-\beta_43\xi^3+\beta_3\xi^3+\beta_4\xi^3$
+
+$f_2(\xi) = \beta_0+\beta_1\xi+\beta_2\xi^2+\beta_3\xi^3$
+
+
+Thus, when $x = \xi, f_1(\xi) = f_2(\xi)$
+
+### d)
+$f_1'(\xi) = f_2'(\xi)$
+
+$f_1'(\xi) = \beta_1+2\beta_2+3\beta_3$
+
+$f_2'(\xi) = (\beta_1+\beta_43\xi^2) +2(\beta_2-\beta_43\xi)+3(\beta_3+\beta_4)\xi^2$
+
+$f_2'(\xi) = \beta_1+3\beta_4\xi^2+2\beta_2\xi-6\beta_4\xi^2+3\beta_3\xi^2+3\beta_4\xi^2$
+
+$f_2'(\xi) = \beta_1+2\beta_2+3\beta_3$
+
+
+Thus, when $x = \xi, f_1'(\xi) = f_2'(\xi)$
+
+### e)
+$f_1''(\xi) = f_2''(\xi)$
+
+$f_1''(\xi) = 2\beta_2+6\beta_3\xi$
+
+$f_2''(\xi) = 2(\beta_2-\beta_43\xi)+6(\beta_3+\beta_4)\xi$
+
+$f_2''(\xi) = 2\beta_2\xi-6\beta_4\xi+6\beta_3\xi+6\beta_4\xi$
+
+$f_2''(\xi) = 2\beta_2+6\beta_3\xi$
+
+
+Thus, when $x = \xi, f_1''(\xi) = f_2''(\xi)$
+
+# Problem 2 (Chapter 7, Problem 3)
+```{r, warning=F, message=F}
+library(ggplot2)
+x <- seq(-2, 2, .1)
+y <- 1 + x-2 * (x - 1)^2 * (x >= 1)
+data <- data.frame(x, y)
+ggplot(data, aes(x = x, y = y)) + geom_line(size=1)
+```
+
+As we can see from the above graph, the y-intercept is where y = 1, and the
+x-intercept is where x = -1. We can also note that the indicator function is
+implemented when $x \ge 1$.
+
+
+# Problem 3 (Chapter 7, Problem 9)
+### i)
+```{r}
+library(ISLR2)
+set.seed(525)
+index <- sample(1:nrow(Boston),nrow(Boston)/2)
+Boston.train <- Boston[index,]
+Boston.test <- Boston[-index,]
+```
+
+### ii)
+```{r, warning=FALSE, message=FALSE}
+set.seed(525)
+attach(Boston.train)
+smooth_spline_cv <- smooth.spline(dis, nox, cv=TRUE)
+smooth_spline_cv$df
+smooth_spline_pred <- predict(smooth_spline_cv, Boston.test$dis)
+sqrt(sum((smooth_spline_pred$y-Boston.test$nox)^2)/nrow(Boston.test))
+```
+
+### iii)
+```{r}
+library(splines)
+set.seed(525)
+nose_spline_fit <- lm(nox~ns(dis, df=6), data=Boston.train)
+nose_spline_pred <- predict(nose_spline_fit, data.frame(Boston.test$dis))
+sqrt(sum((nose_spline_pred-Boston.test$nox)^2)/nrow(Boston.test))
+```
+
+### d)
+```{r}
+cubic_spline_fit <- lm(nox~bs(dis,df=3),data=Boston.train)
+summary(cubic_spline_fit)
+attr(bs(dis,df=3), "knots")
+```
+
+If the degrees of freedom is 4, then there are zero knots in said model. The model
+above has a degrees of freedom equal to 3 in the predictor polynomials and the 
+fourth in the intercept term. By making the model have just 4 degrees of freedom,
+you are making the model contain zero knots, which can be seen from the above output.
+
+```{r}
+dis_grid <- seq(min(dis), max(dis), length=100)
+cubic_spline_pred <- predict(cubic_spline_fit,newdata=data.frame(dis=dis_grid), se=T)
+plot(Boston$dis,Boston$nox,col="lightgray")
+lines(dis_grid,cubic_spline_pred$fit,lwd=2)
+lines(dis_grid,cubic_spline_pred$fit-2*cubic_spline_pred$se,lty=2)
+lines(dis_grid,cubic_spline_pred$fit+2*cubic_spline_pred$se,lty=2)
+```
+

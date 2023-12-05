@@ -1,0 +1,248 @@
+---
+title: "Homework_6"
+author: "Mason Rocco"
+date: "2023-11-21"
+output:
+  pdf_document: default
+  html_document:
+    df_print: paged
+---
+\
+\
+\
+\
+\
+\
+\
+\
+\
+\
+\
+\
+\
+\
+\
+\
+\
+\
+\
+\
+\
+\
+\
+\
+\
+\
+\
+\
+\
+\
+\
+\
+\
+\
+\
+\
+\
+\
+\
+\
+\
+
+## Problem 2 (Ch. 8, Problem 5)
+```{r}
+# Majority Vote
+probs <- c(0.1, 0.15, 0.2, 0.2, 0.55, 0.6, 0.6, 0.65, 0.7, 0.75)
+ifelse(sum(probs >= 0.5) > sum(probs < 0.5), "Red", "Green")
+
+# Average
+ifelse(mean(probs) >= 0.5, "Red", "Green")
+```
+
+As we can see from the above output, the majority vote approach results in the
+classification being red, while the average approach results in the classification
+being green.
+
+## Problem 3 (Ch. 8, Problem 8)
+#### a)
+\
+```{r}
+library(ISLR2)
+set.seed(525)
+train_idx <- sample(1:nrow(Carseats), nrow(Carseats)/2)
+train <- Carseats[train_idx, ]
+test <- Carseats[-train_idx, ]
+```
+
+
+#### b)
+\
+```{r, warning=F}
+library(tree)
+set.seed(525)
+tree.fit <- tree(Sales ~ ., train)
+plot(tree.fit, type = "uniform")
+text(tree.fit, pretty = 0, cex = 0.5)
+
+test_pred <- predict(tree.fit, test)
+mean((test_pred - test$Sales)^2)
+```
+
+As we can see from the above tree, ShelveLoc and Price are the two variables that
+appear at the top of the tree, which would indicate that they are the most 
+important variables in predicting the sales of car seats.
+
+We can also note that the test MSE is 5.603.
+
+
+#### c)
+\
+```{r}
+set.seed(525)
+cv.fit <- cv.tree(tree.fit)
+size <- cv.fit$size[which.min(cv.fit$dev)]
+prune.fit <- prune.tree(tree.fit, best = size)
+plot(prune.fit)
+text(prune.fit, pretty = 0,cex=0.7)
+test_pred <- predict(prune.fit, test)
+mean((test_pred - test$Sales)^2)
+```
+
+Here, the test MSE is still 5.603, which is the same value as in part b. So, pruning
+the tree did not improve the MSE at all.
+
+
+#### d)
+\
+```{r, warning=F, message=F}
+library(randomForest)
+set.seed(525)
+bag.fit <- randomForest(y = train$Sales, x= train[,-1], mtry=ncol(train), importance=TRUE)
+bag.pred <- predict(bag.fit, newdata = test)
+mean((bag.pred-test$Sales)^2)
+varImpPlot(bag.fit, type = 1)
+```
+
+Here, the MSE has decreased significantly to 2.568. We can also note that the 
+ShelveLoc and Price variables are the most important.
+
+#### e)
+\
+```{r, warning=F}
+set.seed(525)
+rf.fit <- randomForest(y = train$Sales, x= train[,-1], mtry=ncol(train), importance = T)
+rf.pred <- predict(rf.fit, newdata = test)
+mean((rf.pred-test$Sales)^2)
+varImpPlot(rf.fit, type = 1)
+```
+
+As shown in the above output, the test MSE for the random forest is identical to
+that of the bagging approach, with the value being 2.568. Also, just as with the
+bagging approach, the ShelveLoc and Price variables are the most important.
+
+## Problem 4 (Ch. 8, Problem 10)
+#### a)
+\
+```{r}
+Hitters.new <- Hitters[!is.na(Hitters$Salary), ]
+Hitters.new$log_Salary <- log(Hitters.new$Salary)
+```
+
+#### b)
+\
+```{r}
+hit_train <- Hitters.new[1:200, ]
+hit_test <- Hitters.new[201:nrow(Hitters.new), ]
+```
+
+#### c)
+\
+```{r, warning=F, message=F}
+library(gbm)
+library(tidyverse)
+set.seed(525)
+lambda_seq <- 10^seq(-6, 0, 0.1)
+train_MSE <- c()
+test_MSE <- c()
+
+for (i in 1:length(lambda_seq)) {
+  boost_TEMP <- gbm(log_Salary ~ . - Salary, 
+                    data = hit_train, 
+                    distribution = "gaussian", 
+                    n.trees = 1000, 
+                    interaction.depth = 2, 
+                    shrinkage = lambda_seq[i])
+  
+  train_MSE[i] <- mean((predict(boost_TEMP, hit_train, n.trees = 1000) - hit_train$log_Salary)^2)
+  
+  test_MSE[i] <- mean((predict(boost_TEMP, hit_test, n.trees = 1000) - hit_test$log_Salary)^2)
+}
+
+data.frame(lambda = lambda_seq, train_MSE) %>%
+  ggplot(aes(x = lambda, y = train_MSE)) + 
+  geom_point(size = 2, col = "blue") + 
+  geom_line(col = "black") + 
+  scale_x_continuous(trans = 'log10', breaks = 10^seq(-6, 0), labels = 10^seq(-6, 0), minor_breaks = NULL) + 
+  labs(x = "Lambda (Shrinkage)", 
+       y = "Training MSE")
+```
+
+#### d)
+\
+```{r}
+set.seed(525)
+data.frame(lambda = lambda_seq, test_MSE) %>%
+  ggplot(aes(x = lambda, y = test_MSE)) + 
+  geom_point(size = 2, col = "blue") + 
+  geom_line(col = "black") + 
+  scale_x_continuous(trans = 'log10', breaks = 10^seq(-6, 0), labels = 10^seq(-6, 0), minor_breaks = NULL) + 
+  labs(x = "Lambda (Shrinkage)", 
+       y = "Test MSE")
+```
+
+#### e)
+\
+```{r, message=F}
+set.seed(525)
+
+# Boosting
+library(gbm)
+boost.fit <- gbm(log_Salary~. - Salary, data = hit_train, distribution = "gaussian", 
+                 n.trees = 500, interaction.depth=2)
+boost.pred <-predict(boost.fit, newdata = hit_test)
+print(mean((boost.pred-hit_test$log_Salary)^2))
+
+# PLS
+library(pls)
+fit.pls <- plsr(log_Salary ~. -Salary, data = hit_train, scale=T, validation="CV")
+print(mean((predict(fit.pls, hit_test) - hit_test$log_Salary)^2))
+
+# PCR
+fit.pcr <- pcr(log_Salary ~. -Salary, data = hit_train, scale=T, validation="CV")
+print(mean((predict(fit.pcr, hit_test) - hit_test$log_Salary)^2))
+```
+
+When comparing the boosting approach to other methods, it seems that the MSE
+has a significant improvement. Here, when compared to PCR and PLS, the test MSE
+for boosting is almost half as small as the other methods.
+
+#### f)
+\
+```{r}
+set.seed(525)
+summary(boost.fit, las=2)
+```
+
+We can see that the CAtBat, CRBI, and CHmRun variables appear to be the most 
+important predictors in the boosted model.
+
+#### g)
+\
+```{r, warning=F}
+set.seed(525)
+hit_bag.fit <- randomForest(log_Salary ~. -Salary, data = hit_train, mtry=nrow(hit_train), importance = T)
+bag.pred <- predict(hit_bag.fit, newdata = hit_test)
+mean((bag.pred-hit_test$log_Salary)^2)
+```
+
+We can see that the test MSE for the bagging approach is 0.231.
